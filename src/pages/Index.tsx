@@ -6,9 +6,13 @@ import { DreamView } from "@/components/DreamView";
 import { NewDreamModal } from "@/components/NewDreamModal";
 import { DreamPatterns } from "@/components/DreamPatterns";
 import { NotificationToggle } from "@/components/NotificationToggle";
+import { UsageTracker } from "@/components/UsageTracker";
+import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
+const FREE_LIMIT = 10;
 
 interface Dream {
   id: string;
@@ -27,7 +31,10 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDreamId, setSelectedDreamId] = useState<string | null>(null);
   const [showNewDream, setShowNewDream] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
   const [activeView, setActiveView] = useState<View>("journal");
+  const isSubscribed = false; // Will be wired to Stripe later
+  const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
 
   useEffect(() => {
     fetchDreams();
@@ -102,7 +109,7 @@ const Index = () => {
 
             {/* New Dream button */}
             <Button
-              onClick={() => setShowNewDream(true)}
+              onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
               className="w-full gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-5 font-body font-medium shadow-dream transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
@@ -151,6 +158,13 @@ const Index = () => {
                 </div>
               </div>
             </div>
+
+            {/* Usage tracker */}
+            <UsageTracker
+              dreamCount={dreams.length}
+              isSubscribed={isSubscribed}
+              onUpgrade={() => setShowSubscription(true)}
+            />
 
             {/* Tips */}
             <div className="bg-primary/5 border border-primary/15 rounded-2xl p-4 space-y-2">
@@ -266,6 +280,15 @@ const Index = () => {
 
             {/* Mobile main content */}
             <main className="flex-1 overflow-y-auto pb-24 px-4 py-4">
+              {/* Mobile usage tracker */}
+              <div className="mb-4">
+                <UsageTracker
+                  dreamCount={dreams.length}
+                  isSubscribed={isSubscribed}
+                  onUpgrade={() => setShowSubscription(true)}
+                  compact
+                />
+              </div>
               {activeView === "patterns" ? (
                 <DreamPatterns />
               ) : (
@@ -302,7 +325,7 @@ const Index = () => {
 
                 {/* FAB in center */}
                 <button
-                  onClick={() => setShowNewDream(true)}
+                  onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
                   className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-dream-primary shadow-dream flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
                 >
                   <Plus className="w-6 h-6" />
@@ -318,6 +341,18 @@ const Index = () => {
         <NewDreamModal
           onClose={() => setShowNewDream(false)}
           onDreamCreated={handleDreamCreated}
+        />
+      )}
+
+      {/* Subscription Modal */}
+      {showSubscription && (
+        <SubscriptionModal
+          dreamCount={dreams.length}
+          onClose={() => setShowSubscription(false)}
+          onSubscribe={(plan) => {
+            // Stripe payment will be wired here
+            setShowSubscription(false);
+          }}
         />
       )}
     </div>
