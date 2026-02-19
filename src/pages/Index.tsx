@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Moon, BookOpen, Sparkles, Stars, Mic, TrendingUp, LogOut } from "lucide-react";
+import { Plus, Moon, BookOpen, Sparkles, Stars, Mic, TrendingUp, LogOut, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DreamCard } from "@/components/DreamCard";
 import { DreamView } from "@/components/DreamView";
@@ -63,6 +63,9 @@ const Index = () => {
     { id: "patterns", label: "Patterns", icon: TrendingUp },
   ];
 
+  // When a dream is selected on mobile, show full-screen dream view
+  const showMobileDreamView = selectedDreamId !== null;
+
   return (
     <div className="min-h-screen bg-gradient-void">
       {/* Background ambient effects */}
@@ -72,7 +75,8 @@ const Index = () => {
         <div className="absolute top-2/3 left-2/3 w-48 h-48 rounded-full bg-primary/3 blur-2xl animate-dream-float" style={{ animationDelay: "6s" }} />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-6 py-8">
+      {/* ── DESKTOP LAYOUT ── */}
+      <div className="hidden md:block relative max-w-6xl mx-auto px-6 py-8">
         <div className="flex gap-8 min-h-screen">
           {/* Sidebar */}
           <aside className="w-72 flex-shrink-0 flex flex-col gap-6">
@@ -208,64 +212,105 @@ const Index = () => {
                 onBack={() => setSelectedDreamId(null)}
               />
             ) : (
-              <div className="flex-1 space-y-8 animate-dream-in">
-                {/* Greeting */}
-                <div className="space-y-1 pt-2">
-                  <h2 className="font-display text-4xl font-semibold">
-                    <span className="text-foreground">{greeting}</span>
-                  </h2>
-                  <p className="text-muted-foreground font-body">
-                    {dreams.length === 0
-                      ? "Begin your journey into the unconscious"
-                      : `You've recorded ${dreams.length} dream${dreams.length !== 1 ? "s" : ""}. What did you dream last night?`}
-                  </p>
-                </div>
-
-                {/* Dream grid */}
-                {loading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />
-                    ))}
-                  </div>
-                ) : dreams.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24 space-y-6">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center pulse-glow">
-                        <Moon className="w-10 h-10 text-primary float" />
-                      </div>
-                      <Sparkles className="w-5 h-5 text-accent absolute -top-1 -right-1 animate-dream-float" />
-                    </div>
-                    <div className="text-center space-y-2">
-                      <h3 className="font-display text-xl text-foreground">Your dream journal awaits</h3>
-                      <p className="text-muted-foreground font-body text-sm max-w-xs">
-                        Record your first dream to begin exploring the language of your unconscious mind
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setShowNewDream(true)}
-                      className="gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl px-8 py-5 font-body font-medium shadow-dream"
-                    >
-                      <Mic className="w-4 h-4" />
-                      Record First Dream
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {dreams.map((dream, i) => (
-                      <DreamCard
-                        key={dream.id}
-                        dream={dream}
-                        onClick={() => setSelectedDreamId(dream.id)}
-                        delay={i * 80}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              <DesktopJournalGrid
+                greeting={greeting}
+                dreams={dreams}
+                loading={loading}
+                onSelectDream={setSelectedDreamId}
+                onNewDream={() => setShowNewDream(true)}
+              />
             )}
           </main>
         </div>
+      </div>
+
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="md:hidden flex flex-col min-h-screen">
+        {/* Mobile: full-screen dream view */}
+        {showMobileDreamView ? (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Mobile dream view header */}
+            <div className="flex items-center gap-3 px-4 pt-safe pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+              <button
+                onClick={() => setSelectedDreamId(null)}
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              <DreamView
+                dreamId={selectedDreamId!}
+                onBack={() => setSelectedDreamId(null)}
+                hideMobileBackButton
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Mobile top header */}
+            <header className="flex items-center gap-3 px-4 pt-safe pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Moon className="w-4 h-4 text-primary" />
+              </div>
+              <h1 className="font-display font-semibold text-foreground flex-1">Dream Journal</h1>
+              <button
+                onClick={signOut}
+                title="Sign out"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </header>
+
+            {/* Mobile main content */}
+            <main className="flex-1 overflow-y-auto pb-24 px-4 py-4">
+              {activeView === "patterns" ? (
+                <DreamPatterns />
+              ) : (
+                <MobileJournalView
+                  greeting={greeting}
+                  dreams={dreams}
+                  loading={loading}
+                  onSelectDream={(id) => {
+                    setSelectedDreamId(id);
+                    setActiveView("journal");
+                  }}
+                />
+              )}
+            </main>
+
+            {/* Mobile bottom nav */}
+            <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/30 bg-background/90 backdrop-blur-md pb-safe">
+              <div className="flex items-center">
+                {navItems.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveView(id)}
+                    className={cn(
+                      "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-body font-medium transition-all",
+                      activeView === id
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {label}
+                  </button>
+                ))}
+
+                {/* FAB in center */}
+                <button
+                  onClick={() => setShowNewDream(true)}
+                  className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-dream-primary shadow-dream flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <Plus className="w-6 h-6" />
+                </button>
+              </div>
+            </nav>
+          </>
+        )}
       </div>
 
       {/* New Dream Modal */}
@@ -278,5 +323,129 @@ const Index = () => {
     </div>
   );
 };
+
+// ── Sub-components ──
+
+function DesktopJournalGrid({
+  greeting, dreams, loading, onSelectDream, onNewDream
+}: {
+  greeting: string;
+  dreams: Dream[];
+  loading: boolean;
+  onSelectDream: (id: string) => void;
+  onNewDream: () => void;
+}) {
+  return (
+    <div className="flex-1 space-y-8 animate-dream-in">
+      <div className="space-y-1 pt-2">
+        <h2 className="font-display text-4xl font-semibold">
+          <span className="text-foreground">{greeting}</span>
+        </h2>
+        <p className="text-muted-foreground font-body">
+          {dreams.length === 0
+            ? "Begin your journey into the unconscious"
+            : `You've recorded ${dreams.length} dream${dreams.length !== 1 ? "s" : ""}. What did you dream last night?`}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : dreams.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 space-y-6">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center pulse-glow">
+              <Moon className="w-10 h-10 text-primary float" />
+            </div>
+            <Sparkles className="w-5 h-5 text-accent absolute -top-1 -right-1 animate-dream-float" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="font-display text-xl text-foreground">Your dream journal awaits</h3>
+            <p className="text-muted-foreground font-body text-sm max-w-xs">
+              Record your first dream to begin exploring the language of your unconscious mind
+            </p>
+          </div>
+          <Button
+            onClick={onNewDream}
+            className="gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl px-8 py-5 font-body font-medium shadow-dream"
+          >
+            <Mic className="w-4 h-4" />
+            Record First Dream
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {dreams.map((dream, i) => (
+            <DreamCard
+              key={dream.id}
+              dream={dream}
+              onClick={() => onSelectDream(dream.id)}
+              delay={i * 80}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileJournalView({
+  greeting, dreams, loading, onSelectDream
+}: {
+  greeting: string;
+  dreams: Dream[];
+  loading: boolean;
+  onSelectDream: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-5 animate-dream-in">
+      <div className="space-y-1 pt-1">
+        <h2 className="font-display text-2xl font-semibold text-foreground">{greeting}</h2>
+        <p className="text-muted-foreground font-body text-sm">
+          {dreams.length === 0
+            ? "Begin your journey into the unconscious"
+            : `${dreams.length} dream${dreams.length !== 1 ? "s" : ""} recorded`}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-40 rounded-2xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : dreams.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-5">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center pulse-glow">
+              <Moon className="w-9 h-9 text-primary float" />
+            </div>
+            <Sparkles className="w-4 h-4 text-accent absolute -top-1 -right-1 animate-dream-float" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="font-display text-lg text-foreground">Your dream journal awaits</h3>
+            <p className="text-muted-foreground font-body text-sm max-w-xs">
+              Tap the + button below to record your first dream
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {dreams.map((dream, i) => (
+            <DreamCard
+              key={dream.id}
+              dream={dream}
+              onClick={() => onSelectDream(dream.id)}
+              delay={i * 60}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default Index;
