@@ -209,7 +209,7 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
               )}
             >
               <Brain className="w-4 h-4" />
-              Jungian Analysis
+              Analysis
             </button>
             <button
               onClick={() => setActiveTab("chat")}

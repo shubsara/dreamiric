@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { dreamText, dreamId } = await req.json();
+    const { dreamText, dreamId, analysisLanguage = "auto" } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -19,7 +19,15 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Step 1: Get Jungian interpretation + emotional theme + symbols
+    // Determine output language instruction
+    const langInstruction = analysisLanguage === "auto" || analysisLanguage === "dream"
+      ? "Detect the language of the dream text and write ALL output fields (title, emotional_theme, interpretation, symbol names and meanings) in that same language."
+      : `Write ALL output fields (title, emotional_theme, interpretation, symbol names and meanings) in ${analysisLanguage}, regardless of the language the dream was written in.`;
+
+    // The image_prompt must always be in English for the image model
+    const imagePromptInstruction = "IMPORTANT: The image_prompt field must always be written in English regardless of output language.";
+
+    // Step 1: Get psychological interpretation + emotional theme + symbols
     const interpretationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -31,21 +39,22 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a depth psychology analyst specializing in Jungian dream analysis. 
-            Analyze dreams through the lens of Jungian archetypes, the collective unconscious, shadow work, anima/animus, and individuation. 
+            content: `You are a depth psychology analyst specializing in dream analysis through Jungian archetypes, the collective unconscious, shadow work, anima/animus, and individuation. 
             Be profound, empathetic, and insightful. Use poetic but accessible language.
+            ${langInstruction}
+            ${imagePromptInstruction}
             Always structure your response as valid JSON.`,
           },
           {
             role: "user",
             content: `Analyze this dream and return a JSON object with these exact fields:
             {
-              "title": "A poetic 3-5 word title for this dream",
-              "emotional_theme": "The core emotional theme in 1-3 words (e.g., 'Liberation', 'Shadow Confrontation', 'Anima Rising')",
-              "image_prompt": "A vivid surrealist art prompt for generating an image that captures the emotional essence of this dream. Describe the visual style as: dreamlike, surrealist painting, ethereal, melting reality, reminiscent of Salvador Dali or Remedios Varo, rich in symbolic imagery, cinematic lighting. Include the main symbolic elements.",
-              "interpretation": "A structured 3-paragraph Jungian interpretation covering: 1) The archetypal themes and figures present, 2) What the unconscious might be communicating about the dreamer's individuation journey, 3) Practical insights for waking life integration. Use empathetic, insightful language.",
+              "title": "A poetic 3-5 word title for this dream (in the output language)",
+              "emotional_theme": "The core emotional theme in 1-3 words (in the output language)",
+              "image_prompt": "A vivid surrealist art prompt IN ENGLISH for generating an image that captures the emotional essence of this dream. Describe the visual style as: dreamlike, surrealist painting, ethereal, melting reality, reminiscent of Salvador Dali or Remedios Varo, rich in symbolic imagery, cinematic lighting. Include the main symbolic elements.",
+              "interpretation": "A structured 3-paragraph psychological interpretation covering: 1) The archetypal themes and figures present, 2) What the unconscious might be communicating about the dreamer's individuation journey, 3) Practical insights for waking life integration. Use empathetic, insightful language. Write in the output language.",
               "symbols": [
-                {"name": "symbol name", "meaning": "brief Jungian meaning"}
+                {"name": "symbol name in output language", "meaning": "brief Jungian meaning in output language"}
               ]
             }
             
