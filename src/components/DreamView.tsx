@@ -219,10 +219,11 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
 
         {/* Symbols */}
         {dream.symbols && dream.symbols.length > 0 && (
-          <div className="space-y-3">
+          <div className={cn("space-y-3 transition-opacity duration-300", reanalyzing && "opacity-40 pointer-events-none")}>
             <h3 className="font-display text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-accent" />
               Key Symbols
+              {reanalyzing && <Loader2 className="w-3 h-3 text-primary animate-spin ml-1" />}
             </h3>
             <div className="flex flex-wrap gap-2">
               {dream.symbols.map((symbol, i) => (
