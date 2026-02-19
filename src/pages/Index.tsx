@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Plus, Moon, BookOpen, Sparkles, Stars, Mic, TrendingUp } from "lucide-react";
+import { Plus, Moon, BookOpen, Sparkles, Stars, Mic, TrendingUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DreamCard } from "@/components/DreamCard";
 import { DreamView } from "@/components/DreamView";
 import { NewDreamModal } from "@/components/NewDreamModal";
 import { DreamPatterns } from "@/components/DreamPatterns";
 import { NotificationToggle } from "@/components/NotificationToggle";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface Dream {
 type View = "journal" | "patterns";
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDreamId, setSelectedDreamId] = useState<string | null>(null);
@@ -79,12 +81,19 @@ const Index = () => {
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <Moon className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h1 className="font-display font-semibold text-foreground text-lg leading-tight">
                   Dream Journal
                 </h1>
-                <p className="text-xs text-muted-foreground font-body">Subconscious explorer</p>
+                <p className="text-xs text-muted-foreground font-body truncate">{user?.email}</p>
               </div>
+              <button
+                onClick={signOut}
+                title="Sign out"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex-shrink-0"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
 
             {/* New Dream button */}

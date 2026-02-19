@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
   const [statusMessage, setStatusMessage] = useState("");
   const [analysisLanguage, setAnalysisLanguage] = useState("dream");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const processAudio = async (blob: Blob) => {
     setStage("transcribing");
@@ -85,7 +87,7 @@ export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
     try {
       const { data: dream, error: createError } = await supabase
         .from("dreams")
-        .insert({ dream_text: dreamText, raw_transcript: dreamText })
+        .insert({ dream_text: dreamText, raw_transcript: dreamText, user_id: user!.id })
         .select()
         .single();
 
