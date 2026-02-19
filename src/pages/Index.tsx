@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Plus, Moon, BookOpen, Sparkles, Stars, Mic } from "lucide-react";
+import { Plus, Moon, BookOpen, Sparkles, Stars, Mic, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DreamCard } from "@/components/DreamCard";
 import { DreamView } from "@/components/DreamView";
 import { NewDreamModal } from "@/components/NewDreamModal";
+import { DreamPatterns } from "@/components/DreamPatterns";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface Dream {
   id: string;
@@ -15,11 +17,14 @@ interface Dream {
   created_at: string;
 }
 
+type View = "journal" | "patterns";
+
 const Index = () => {
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDreamId, setSelectedDreamId] = useState<string | null>(null);
   const [showNewDream, setShowNewDream] = useState(false);
+  const [activeView, setActiveView] = useState<View>("journal");
 
   useEffect(() => {
     fetchDreams();
@@ -38,6 +43,7 @@ const Index = () => {
   const handleDreamCreated = (dreamId: string) => {
     setShowNewDream(false);
     setSelectedDreamId(dreamId);
+    setActiveView("journal");
     fetchDreams();
   };
 
@@ -48,6 +54,11 @@ const Index = () => {
     hour < 17 ? "Welcome back" :
     hour < 21 ? "As the evening falls..." :
     "In the quiet of night...";
+
+  const navItems: Array<{ id: View; label: string; icon: typeof Moon }> = [
+    { id: "journal", label: "Journal", icon: BookOpen },
+    { id: "patterns", label: "Patterns", icon: TrendingUp },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-void">
@@ -84,6 +95,28 @@ const Index = () => {
               New Dream Entry
             </Button>
 
+            {/* Nav */}
+            <div className="space-y-1">
+              {navItems.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => {
+                    setActiveView(id);
+                    setSelectedDreamId(null);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all",
+                    activeView === id && !selectedDreamId
+                      ? "bg-primary/15 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+
             {/* Stats */}
             <div className="bg-dream-card rounded-2xl p-4 nebula-border space-y-3">
               <h3 className="font-display text-xs text-muted-foreground uppercase tracking-wider">
@@ -117,8 +150,8 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Recent entries list */}
-            {dreams.length > 0 && (
+            {/* Recent entries list – only in journal view */}
+            {activeView === "journal" && dreams.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-display text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <BookOpen className="w-3 h-3" />
@@ -128,7 +161,10 @@ const Index = () => {
                   {dreams.slice(0, 8).map((dream) => (
                     <button
                       key={dream.id}
-                      onClick={() => setSelectedDreamId(dream.id)}
+                      onClick={() => {
+                        setSelectedDreamId(dream.id);
+                        setActiveView("journal");
+                      }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-body transition-all ${
                         selectedDreamId === dream.id
                           ? "bg-primary/15 text-primary border border-primary/20"
@@ -147,8 +183,10 @@ const Index = () => {
           </aside>
 
           {/* Main content */}
-          <main className="flex-1 flex flex-col min-h-0">
-            {selectedDreamId ? (
+          <main className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            {activeView === "patterns" ? (
+              <DreamPatterns />
+            ) : selectedDreamId ? (
               <DreamView
                 dreamId={selectedDreamId}
                 onBack={() => setSelectedDreamId(null)}
