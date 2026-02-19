@@ -54,6 +54,29 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
     fetchDream();
   }, [dreamId]);
 
+  // Poll until interpretation is ready (analysis may still be running when we first load)
+  useEffect(() => {
+    if (!dream) return;
+    if (dream.interpretation) return; // already done
+
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("dreams")
+        .select("*")
+        .eq("id", dreamId)
+        .single();
+      if (data?.interpretation) {
+        setDream({
+          ...data,
+          symbols: Array.isArray(data.symbols) ? (data.symbols as Array<{ name: string; meaning: string }>) : [],
+        });
+        clearInterval(interval);
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [dream?.interpretation, dreamId]);
+
   const fetchDream = async () => {
     const { data, error } = await supabase
       .from("dreams")
