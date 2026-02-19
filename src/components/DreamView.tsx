@@ -40,9 +40,10 @@ interface Dream {
 interface DreamViewProps {
   dreamId: string;
   onBack: () => void;
+  hideMobileBackButton?: boolean;
 }
 
-export function DreamView({ dreamId, onBack }: DreamViewProps) {
+export function DreamView({ dreamId, onBack, hideMobileBackButton = false }: DreamViewProps) {
   const [dream, setDream] = useState<Dream | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"interpretation" | "chat">("interpretation");
@@ -133,16 +134,18 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 animate-dream-in">
-      {/* Back button */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body text-sm group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          Journal
-        </button>
-      </div>
+      {/* Back button – hidden on mobile when parent handles navigation */}
+      {!hideMobileBackButton && (
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body text-sm group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            Journal
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto space-y-6 pb-6">
         {/* Header */}
