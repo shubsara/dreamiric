@@ -1,0 +1,10 @@
+project_id = "vswlizlpaoicywdzdwne"
+
+[functions.transcribe-dream]
+verify_jwt = false
+
+[functions.analyze-dream]
+verify_jwt = false
+
+[functions.dream-chat]
+verify_jwt = false

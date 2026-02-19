@@ -1,0 +1,147 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { dreamText, dreamId } = await req.json();
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Step 1: Get Jungian interpretation + emotional theme + symbols
+    const interpretationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content: `You are a depth psychology analyst specializing in Jungian dream analysis. 
+            Analyze dreams through the lens of Jungian archetypes, the collective unconscious, shadow work, anima/animus, and individuation. 
+            Be profound, empathetic, and insightful. Use poetic but accessible language.
+            Always structure your response as valid JSON.`,
+          },
+          {
+            role: "user",
+            content: `Analyze this dream and return a JSON object with these exact fields:
+            {
+              "title": "A poetic 3-5 word title for this dream",
+              "emotional_theme": "The core emotional theme in 1-3 words (e.g., 'Liberation', 'Shadow Confrontation', 'Anima Rising')",
+              "image_prompt": "A vivid surrealist art prompt for generating an image that captures the emotional essence of this dream. Describe the visual style as: dreamlike, surrealist painting, ethereal, melting reality, reminiscent of Salvador Dali or Remedios Varo, rich in symbolic imagery, cinematic lighting. Include the main symbolic elements.",
+              "interpretation": "A structured 3-paragraph Jungian interpretation covering: 1) The archetypal themes and figures present, 2) What the unconscious might be communicating about the dreamer's individuation journey, 3) Practical insights for waking life integration. Use empathetic, insightful language.",
+              "symbols": [
+                {"name": "symbol name", "meaning": "brief Jungian meaning"}
+              ]
+            }
+            
+            Dream to analyze: "${dreamText}"`,
+          },
+        ],
+      }),
+    });
+
+    if (!interpretationResponse.ok) {
+      throw new Error(`Analysis failed: ${interpretationResponse.status}`);
+    }
+
+    const interpretationData = await interpretationResponse.json();
+    let analysisText = interpretationData.choices?.[0]?.message?.content || "";
+    
+    // Clean up JSON response
+    analysisText = analysisText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const analysis = JSON.parse(analysisText);
+
+    // Step 2: Generate surrealist image
+    const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: analysis.image_prompt + ", ultra high resolution, no text, no words",
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    let imageUrl = null;
+    if (imageResponse.ok) {
+      const imageData = await imageResponse.json();
+      const base64Image = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      
+      if (base64Image) {
+        // Upload to storage
+        const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+        const binaryStr = atob(base64Data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        
+        const fileName = `dream-${dreamId}-${Date.now()}.png`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("dream-images")
+          .upload(fileName, bytes.buffer, { contentType: "image/png" });
+
+        if (!uploadError && uploadData) {
+          const { data: publicUrl } = supabase.storage
+            .from("dream-images")
+            .getPublicUrl(fileName);
+          imageUrl = publicUrl.publicUrl;
+        }
+      }
+    }
+
+    // Step 3: Update dream record
+    const { error: updateError } = await supabase
+      .from("dreams")
+      .update({
+        title: analysis.title,
+        emotional_theme: analysis.emotional_theme,
+        interpretation: analysis.interpretation,
+        symbols: analysis.symbols,
+        image_url: imageUrl,
+      })
+      .eq("id", dreamId);
+
+    if (updateError) throw updateError;
+
+    return new Response(
+      JSON.stringify({
+        title: analysis.title,
+        emotional_theme: analysis.emotional_theme,
+        interpretation: analysis.interpretation,
+        symbols: analysis.symbols,
+        image_url: imageUrl,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    console.error("Dream analysis error:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
