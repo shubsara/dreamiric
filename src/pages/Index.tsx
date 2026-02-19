@@ -230,7 +230,7 @@ const Index = () => {
         {showMobileDreamView ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Mobile dream view header */}
-            <div className="flex items-center gap-3 px-4 pt-safe pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
               <button
                 onClick={() => setSelectedDreamId(null)}
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body text-sm"
@@ -250,7 +250,7 @@ const Index = () => {
         ) : (
           <>
             {/* Mobile top header */}
-            <header className="flex items-center gap-3 px-4 pt-safe pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+            <header className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <Moon className="w-4 h-4 text-primary" />
               </div>
@@ -282,7 +282,7 @@ const Index = () => {
             </main>
 
             {/* Mobile bottom nav */}
-            <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/30 bg-background/90 backdrop-blur-md pb-safe">
+            <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border/30 bg-background/90 backdrop-blur-md" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
               <div className="flex items-center">
                 {navItems.map(({ id, label, icon: Icon }) => (
                   <button

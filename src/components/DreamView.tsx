@@ -55,6 +55,36 @@ export function DreamView({ dreamId, onBack, hideMobileBackButton = false }: Dre
     fetchDream();
   }, [dreamId]);
 
+  // Poll for analysis completion if dream is missing interpretation/image
+  useEffect(() => {
+    if (!dream) return;
+    const isAnalysisComplete = dream.interpretation && dream.image_url;
+    if (isAnalysisComplete) return;
+
+    // Poll every 3 seconds until analysis is complete
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from("dreams")
+        .select("*")
+        .eq("id", dreamId)
+        .single();
+
+      if (!error && data) {
+        const updated = {
+          ...data,
+          symbols: Array.isArray(data.symbols) ? (data.symbols as Array<{ name: string; meaning: string }>) : [],
+        };
+        setDream(updated);
+        // Stop polling once analysis is complete
+        if (updated.interpretation && updated.image_url) {
+          clearInterval(interval);
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [dream?.id, dream?.interpretation, dream?.image_url]);
+
   const fetchDream = async () => {
     const { data, error } = await supabase
       .from("dreams")
@@ -148,6 +178,17 @@ export function DreamView({ dreamId, onBack, hideMobileBackButton = false }: Dre
       )}
 
       <div className="flex-1 overflow-y-auto space-y-6 pb-6">
+        {/* Analysis in-progress banner */}
+        {!dream.interpretation && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
+            <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-sm font-body font-medium text-primary">Weaving your dreamscape…</p>
+              <p className="text-xs text-muted-foreground font-body">Analysis & image are being generated. This page will update automatically.</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-4">
@@ -185,9 +226,9 @@ export function DreamView({ dreamId, onBack, hideMobileBackButton = false }: Dre
             </div>
           </div>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden aspect-[16/9] bg-dream-aurora flex items-center justify-center nebula-border">
-            <Moon className="w-16 h-16 text-primary/20" />
-            <p className="absolute bottom-3 text-xs text-muted-foreground font-body">Visualization pending...</p>
+          <div className="relative rounded-2xl overflow-hidden aspect-[16/9] bg-dream-aurora flex flex-col items-center justify-center gap-3 nebula-border">
+            <Loader2 className="w-8 h-8 text-primary/50 animate-spin" />
+            <p className="text-xs text-muted-foreground font-body">Generating dream visualization…</p>
           </div>
         )}
 
