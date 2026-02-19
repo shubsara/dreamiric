@@ -5,6 +5,7 @@ import { DreamCard } from "@/components/DreamCard";
 import { DreamView } from "@/components/DreamView";
 import { NewDreamModal } from "@/components/NewDreamModal";
 import { DreamPatterns } from "@/components/DreamPatterns";
+import { NotificationToggle } from "@/components/NotificationToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -148,6 +149,12 @@ const Index = () => {
                 Record your dream immediately upon waking — even partial fragments. 
                 The more detail you capture, the richer the analysis.
               </p>
+            </div>
+
+            {/* Morning reminders */}
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground font-body uppercase tracking-wider px-1">Reminders</p>
+              <NotificationToggle />
             </div>
 
             {/* Recent entries list – only in journal view */}

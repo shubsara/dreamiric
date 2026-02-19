@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.dream-chat]
 verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
+
+[functions.save-push-subscription]
+verify_jwt = false
+
+[functions.send-morning-reminder]
+verify_jwt = false
