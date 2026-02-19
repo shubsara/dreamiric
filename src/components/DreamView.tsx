@@ -1,9 +1,30 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Sparkles, Brain, MessageCircle, Moon, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Sparkles, Brain, MessageCircle, Moon, ChevronDown, ChevronUp, Globe, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DreamChat } from "@/components/DreamChat";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
+const ANALYSIS_LANGUAGES = [
+  { value: "dream", label: "Same as dream" },
+  { value: "English", label: "English" },
+  { value: "Spanish", label: "Español" },
+  { value: "French", label: "Français" },
+  { value: "German", label: "Deutsch" },
+  { value: "Italian", label: "Italiano" },
+  { value: "Portuguese", label: "Português" },
+  { value: "Dutch", label: "Nederlands" },
+  { value: "Russian", label: "Русский" },
+  { value: "Japanese", label: "日本語" },
+  { value: "Korean", label: "한국어" },
+  { value: "Chinese", label: "中文" },
+  { value: "Arabic", label: "العربية" },
+  { value: "Hindi", label: "हिन्दी" },
+  { value: "Turkish", label: "Türkçe" },
+  { value: "Polish", label: "Polski" },
+  { value: "Swedish", label: "Svenska" },
+];
 
 interface Dream {
   id: string;
@@ -26,6 +47,8 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"interpretation" | "chat">("interpretation");
   const [showFullText, setShowFullText] = useState(false);
+  const [analysisLanguage, setAnalysisLanguage] = useState("dream");
+  const [reanalyzing, setReanalyzing] = useState(false);
 
   useEffect(() => {
     fetchDream();
@@ -45,6 +68,36 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
       });
     }
     setLoading(false);
+  };
+
+  const reanalyze = async (lang: string) => {
+    if (!dream || reanalyzing) return;
+    setReanalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-dream", {
+        body: { dreamId: dream.id, dreamText: dream.dream_text, analysisLanguage: lang },
+      });
+      if (error) throw error;
+      if (data) {
+        setDream(prev => prev ? {
+          ...prev,
+          title: data.title ?? prev.title,
+          emotional_theme: data.emotional_theme ?? prev.emotional_theme,
+          interpretation: data.interpretation ?? prev.interpretation,
+          symbols: Array.isArray(data.symbols) ? data.symbols : prev.symbols,
+          image_url: data.image_url ?? prev.image_url,
+        } : prev);
+      }
+    } catch (e) {
+      console.error("Reanalysis error:", e);
+    } finally {
+      setReanalyzing(false);
+    }
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setAnalysisLanguage(lang);
+    reanalyze(lang);
   };
 
   const date = dream
@@ -227,7 +280,48 @@ export function DreamView({ dreamId, onBack }: DreamViewProps) {
 
           {activeTab === "interpretation" ? (
             <div className="bg-dream-card rounded-2xl p-6 nebula-border space-y-4">
-              {dream.interpretation ? (
+              {/* Language selector row */}
+              <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground font-body">Analysis language</span>
+                <div className="ml-auto flex items-center gap-2">
+                  <Select
+                    value={analysisLanguage}
+                    onValueChange={handleLanguageChange}
+                    disabled={reanalyzing}
+                  >
+                    <SelectTrigger className="h-7 text-xs font-body w-40 border-border/50 bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ANALYSIS_LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value} className="text-xs font-body">
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {reanalyzing && (
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin flex-shrink-0" />
+                  )}
+                </div>
+              </div>
+
+              {/* Interpretation content */}
+              {reanalyzing ? (
+                <div className="flex flex-col items-center py-8 gap-3">
+                  <div className="flex gap-1">
+                    {[0, 1, 2].map(i => (
+                      <div
+                        key={i}
+                        className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground font-body">Translating analysis...</p>
+                </div>
+              ) : dream.interpretation ? (
                 <div className="dream-prose font-body text-sm text-foreground/85 leading-relaxed space-y-3">
                   {dream.interpretation.split("\n").filter(Boolean).map((para, i) => (
                     <p key={i}>{para}</p>
