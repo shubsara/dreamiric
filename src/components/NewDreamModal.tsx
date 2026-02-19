@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Mic, PenLine, X, Loader2, Sparkles } from "lucide-react";
+import { Mic, PenLine, X, Loader2, Sparkles, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,11 +16,32 @@ interface NewDreamModalProps {
 type InputMode = "voice" | "text";
 type Stage = "input" | "transcribing" | "analyzing";
 
+const ANALYSIS_LANGUAGES = [
+  { value: "dream", label: "Same as dream" },
+  { value: "English", label: "English" },
+  { value: "Spanish", label: "Español" },
+  { value: "French", label: "Français" },
+  { value: "German", label: "Deutsch" },
+  { value: "Italian", label: "Italiano" },
+  { value: "Portuguese", label: "Português" },
+  { value: "Dutch", label: "Nederlands" },
+  { value: "Russian", label: "Русский" },
+  { value: "Japanese", label: "日本語" },
+  { value: "Korean", label: "한국어" },
+  { value: "Chinese", label: "中文" },
+  { value: "Arabic", label: "العربية" },
+  { value: "Hindi", label: "हिन्दी" },
+  { value: "Turkish", label: "Türkçe" },
+  { value: "Polish", label: "Polski" },
+  { value: "Swedish", label: "Svenska" },
+];
+
 export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
   const [mode, setMode] = useState<InputMode>("voice");
   const [stage, setStage] = useState<Stage>("input");
   const [textInput, setTextInput] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [analysisLanguage, setAnalysisLanguage] = useState("dream");
   const { toast } = useToast();
 
   const processAudio = async (blob: Blob) => {
@@ -61,7 +83,6 @@ export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
     setStatusMessage("Creating your dream entry...");
 
     try {
-      // Create dream record first
       const { data: dream, error: createError } = await supabase
         .from("dreams")
         .insert({ dream_text: dreamText, raw_transcript: dreamText })
@@ -81,7 +102,7 @@ export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ dreamText, dreamId: dream.id }),
+        body: JSON.stringify({ dreamText, dreamId: dream.id, analysisLanguage }),
       });
 
       if (!analyzeResp.ok) {
@@ -189,23 +210,45 @@ export function NewDreamModal({ onClose, onDreamCreated }: NewDreamModalProps) {
 
             {/* Text mode */}
             {mode === "text" && (
-              <div className="space-y-4">
-                <Textarea
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Describe your dream in as much detail as you can remember... The setting, the people, the feelings, the strange details that don't quite make sense..."
-                  className="min-h-40 bg-input border-border text-foreground placeholder:text-muted-foreground resize-none font-body text-sm leading-relaxed focus:border-primary/50 rounded-xl"
-                  autoFocus
-                />
-                <Button
-                  onClick={processText}
-                  disabled={!textInput.trim()}
-                  className="w-full bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-6 font-body font-medium gap-2 transition-all"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Analyze This Dream
-                </Button>
+              <Textarea
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Describe your dream in any language... The setting, the people, the feelings, the strange details that don't quite make sense..."
+                className="min-h-40 bg-input border-border text-foreground placeholder:text-muted-foreground resize-none font-body text-sm leading-relaxed focus:border-primary/50 rounded-xl"
+                autoFocus
+              />
+            )}
+
+            {/* Analysis language selector */}
+            <div className="mt-5 pt-4 border-t border-border space-y-2">
+              <div className="flex items-center gap-2">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground font-body uppercase tracking-wider">Analysis language</span>
               </div>
+              <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
+                <SelectTrigger className="w-full bg-input border-border text-sm font-body rounded-xl h-10 focus:border-primary/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border rounded-xl">
+                  {ANALYSIS_LANGUAGES.map(({ value, label }) => (
+                    <SelectItem key={value} value={value} className="font-body text-sm">
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Submit button (text mode only) */}
+            {mode === "text" && (
+              <Button
+                onClick={processText}
+                disabled={!textInput.trim()}
+                className="w-full mt-4 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-6 font-body font-medium gap-2 transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                Analyze This Dream
+              </Button>
             )}
           </>
         )}
