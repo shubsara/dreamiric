@@ -7,10 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ──────────────────────────────────────────────
-// VAPID helpers using Web Crypto API (no deps)
-// ──────────────────────────────────────────────
-
+// VAPID helpers
 function base64UrlEncode(buffer: ArrayBuffer | Uint8Array): string {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = "";
@@ -32,7 +29,6 @@ async function importVapidPrivateKey(
   privateKeyBase64Url: string,
   publicKeyBase64Url: string
 ): Promise<CryptoKey> {
-  // Uncompressed P-256 public key: 0x04 + 32 bytes x + 32 bytes y
   const pubBytes = base64UrlDecode(publicKeyBase64Url);
   const x = base64UrlEncode(pubBytes.slice(1, 33));
   const y = base64UrlEncode(pubBytes.slice(33, 65));
@@ -61,7 +57,7 @@ async function createVapidJwt(
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     aud: audience,
-    exp: now + 43200, // 12 hours
+    exp: now + 43200,
     sub: "mailto:support@oneiric.app",
   };
 
@@ -79,18 +75,13 @@ async function createVapidJwt(
   return `vapid t=${jwt},k=${publicKeyBase64Url}`;
 }
 
-// ──────────────────────────────────────────────
-// AES-128-GCM message encryption (RFC 8291)
-// ──────────────────────────────────────────────
-
 async function encryptPayload(
   subscription: { endpoint: string; p256dh: string; auth: string },
   payload: string
 ): Promise<{ ciphertext: Uint8Array; salt: Uint8Array }> {
-  const authBytes = base64UrlDecode(subscription.auth); // 16 bytes
-  const receiverPublicKeyBytes = base64UrlDecode(subscription.p256dh); // 65 bytes
+  const authBytes = base64UrlDecode(subscription.auth);
+  const receiverPublicKeyBytes = base64UrlDecode(subscription.p256dh);
 
-  // Import receiver's P-256 public key
   const receiverPublicKey = await crypto.subtle.importKey(
     "raw",
     receiverPublicKeyBytes,
@@ -99,19 +90,16 @@ async function encryptPayload(
     []
   );
 
-  // Generate ephemeral ECDH key pair
   const ephemeralKeyPair = await crypto.subtle.generateKey(
     { name: "ECDH", namedCurve: "P-256" },
     true,
     ["deriveKey", "deriveBits"]
   );
 
-  // Export ephemeral public key
   const ephemeralPublicKeyBytes = new Uint8Array(
     await crypto.subtle.exportKey("raw", ephemeralKeyPair.publicKey)
   );
 
-  // Derive shared secret
   const sharedSecret = new Uint8Array(
     await crypto.subtle.deriveBits(
       { name: "ECDH", public: receiverPublicKey },
@@ -120,15 +108,12 @@ async function encryptPayload(
     )
   );
 
-  // Generate salt
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  // HKDF to derive content encryption key and nonce
   const hkdfKey = await crypto.subtle.importKey("raw", sharedSecret, "HKDF", false, [
     "deriveBits",
   ]);
 
-  // PRK using auth secret
   const prk = new Uint8Array(
     await crypto.subtle.deriveBits(
       {
@@ -174,7 +159,6 @@ async function encryptPayload(
     )
   );
 
-  // Encrypt payload with padding delimiter 0x02
   const payloadBytes = new TextEncoder().encode(payload);
   const plaintext = new Uint8Array(payloadBytes.length + 1);
   plaintext.set(payloadBytes);
@@ -185,8 +169,6 @@ async function encryptPayload(
     await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aesKey, plaintext)
   );
 
-  // Build the encrypted content-encoding header (RFC 8188)
-  // salt(16) + rs(4) + idlen(1) + keyid(ephemeralPublicKey) + ciphertext
   const rs = 4096;
   const header = new Uint8Array(16 + 4 + 1 + ephemeralPublicKeyBytes.length);
   header.set(salt, 0);
@@ -216,12 +198,31 @@ function concat(...arrays: Uint8Array[]): Uint8Array {
   return result;
 }
 
-// ──────────────────────────────────────────────
-// Main
-// ──────────────────────────────────────────────
-
+// This function is triggered by a cron job / external scheduler, so it uses a shared secret instead of user auth
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Auth check - require Authorization header
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const authSupabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: authError } = await authSupabase.auth.getClaims(token);
+  if (authError || !claimsData?.claims) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -239,7 +240,6 @@ serve(async (req) => {
   }
 
   try {
-    // Fetch all subscriptions
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")
       .select("*");
@@ -288,18 +288,16 @@ serve(async (req) => {
         if (response.status === 201 || response.status === 200) {
           sent++;
         } else if (response.status === 410 || response.status === 404) {
-          // Subscription expired — clean up
           staleEndpoints.push(sub.endpoint);
         } else {
           const text = await response.text();
-          console.error(`Push failed for ${sub.endpoint}: ${response.status} ${text}`);
+          console.error(`Push failed for endpoint: ${response.status} ${text}`);
         }
       } catch (err) {
-        console.error(`Error pushing to ${sub.endpoint}:`, err);
+        console.error(`Error pushing to endpoint:`, err);
       }
     }
 
-    // Remove expired subscriptions
     if (staleEndpoints.length > 0) {
       await supabase
         .from("push_subscriptions")
@@ -314,7 +312,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("send-morning-reminder error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -10,6 +10,29 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Auth check
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const authSupabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: authError } = await authSupabase.auth.getClaims(token);
+  if (authError || !claimsData?.claims) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const userId = claimsData.claims.sub;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -17,12 +40,12 @@ serve(async (req) => {
 
   try {
     if (req.method === "DELETE") {
-      // Unsubscribe: remove by endpoint
       const { endpoint } = await req.json();
       const { error } = await supabase
         .from("push_subscriptions")
         .delete()
-        .eq("endpoint", endpoint);
+        .eq("endpoint", endpoint)
+        .eq("user_id", userId);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -35,20 +58,19 @@ serve(async (req) => {
 
       if (!endpoint || !keys?.p256dh || !keys?.auth) {
         return new Response(JSON.stringify({ error: "Invalid subscription" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const userAgent = req.headers.get("user-agent") || null;
 
-      // Upsert so re-subscribing works
       const { error } = await supabase.from("push_subscriptions").upsert(
         {
           endpoint,
           p256dh: keys.p256dh,
           auth: keys.auth,
           user_agent: userAgent,
+          user_id: userId,
         },
         { onConflict: "endpoint" }
       );
@@ -61,13 +83,12 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("save-push-subscription error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

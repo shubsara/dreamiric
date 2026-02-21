@@ -10,6 +10,29 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const authSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authError } = await authSupabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
     const { dreamText, dreamId, analysisLanguage = "auto" } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -19,15 +42,28 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Verify user owns this dream
+    const { data: dream, error: dreamError } = await supabase
+      .from("dreams")
+      .select("id")
+      .eq("id", dreamId)
+      .eq("user_id", userId)
+      .single();
+
+    if (dreamError || !dream) {
+      return new Response(JSON.stringify({ error: "Dream not found or access denied" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Determine output language instruction
     const langInstruction = analysisLanguage === "auto" || analysisLanguage === "dream"
       ? "Detect the language of the dream text and write ALL output fields (title, emotional_theme, interpretation, symbol names and meanings) in that same language."
       : `Write ALL output fields (title, emotional_theme, interpretation, symbol names and meanings) in ${analysisLanguage}, regardless of the language the dream was written in.`;
 
-    // The image_prompt must always be in English for the image model
     const imagePromptInstruction = "IMPORTANT: The image_prompt field must always be written in English regardless of output language.";
 
-    // Step 1: Get psychological interpretation + emotional theme + symbols
+    // Step 1: Get psychological interpretation
     const interpretationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -70,8 +106,6 @@ serve(async (req) => {
 
     const interpretationData = await interpretationResponse.json();
     let analysisText = interpretationData.choices?.[0]?.message?.content || "";
-    
-    // Clean up JSON response
     analysisText = analysisText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const analysis = JSON.parse(analysisText);
 
@@ -84,12 +118,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: analysis.image_prompt + ", ultra high resolution, no text, no words",
-          },
-        ],
+        messages: [{ role: "user", content: analysis.image_prompt + ", ultra high resolution, no text, no words" }],
         modalities: ["image", "text"],
       }),
     });
@@ -98,25 +127,17 @@ serve(async (req) => {
     if (imageResponse.ok) {
       const imageData = await imageResponse.json();
       const base64Image = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      
       if (base64Image) {
-        // Upload to storage
         const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
         const binaryStr = atob(base64Data);
         const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
-        }
-        
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
         const fileName = `dream-${dreamId}-${Date.now()}.png`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("dream-images")
           .upload(fileName, bytes.buffer, { contentType: "image/png" });
-
         if (!uploadError && uploadData) {
-          const { data: publicUrl } = supabase.storage
-            .from("dream-images")
-            .getPublicUrl(fileName);
+          const { data: publicUrl } = supabase.storage.from("dream-images").getPublicUrl(fileName);
           imageUrl = publicUrl.publicUrl;
         }
       }
@@ -148,7 +169,7 @@ serve(async (req) => {
     );
   } catch (e) {
     console.error("Dream analysis error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An error occurred during analysis" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

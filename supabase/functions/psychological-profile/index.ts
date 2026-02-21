@@ -11,6 +11,29 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const authSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authError } = await authSupabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -18,21 +41,20 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Fetch all dreams with their analyses
+    // Only fetch THIS user's dreams
     const { data: dreams, error: dreamsError } = await supabase
       .from("dreams")
       .select("id, title, dream_text, emotional_theme, interpretation, symbols, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
     if (dreamsError) throw dreamsError;
     if (!dreams || dreams.length === 0) {
       return new Response(JSON.stringify({ error: "No dreams found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch all dream messages (chat conversations)
     const dreamIds = dreams.map((d) => d.id);
     const { data: messages } = await supabase
       .from("dream_messages")
@@ -105,8 +127,7 @@ Be specific, drawing from actual content in their dreams. Be empathetic yet psyc
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error(`AI gateway error: ${response.status}`);
@@ -114,17 +135,14 @@ Be specific, drawing from actual content in their dreams. Be empathetic yet psyc
 
     const aiData = await response.json();
     const rawContent = aiData.choices?.[0]?.message?.content || "";
-
-    // Strip markdown fences if present
     const jsonStr = rawContent.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
     let profile;
     try {
       profile = JSON.parse(jsonStr);
     } catch {
-      return new Response(JSON.stringify({ error: "Failed to parse AI response", raw: rawContent }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -134,7 +152,7 @@ Be specific, drawing from actual content in their dreams. Be empathetic yet psyc
   } catch (e) {
     console.error("Psychological profile error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
