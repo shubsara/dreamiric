@@ -10,6 +10,29 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const authSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authError } = await authSupabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
     const { dreamId, message, dreamText, interpretation } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -18,6 +41,20 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Verify user owns this dream
+    const { data: dream, error: dreamError } = await supabase
+      .from("dreams")
+      .select("id")
+      .eq("id", dreamId)
+      .eq("user_id", userId)
+      .single();
+
+    if (dreamError || !dream) {
+      return new Response(JSON.stringify({ error: "Dream not found or access denied" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get conversation history
     const { data: history } = await supabase
@@ -68,20 +105,17 @@ serve(async (req) => {
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (aiResponse.status === 402) {
         return new Response(JSON.stringify({ error: "Payment required, please add funds to your workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error(`AI gateway error: ${aiResponse.status}`);
     }
 
-    // We'll collect the full response to save it
     const reader = aiResponse.body!.getReader();
     const decoder = new TextDecoder();
     let fullContent = "";
@@ -94,18 +128,14 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
-            
             let newlineIndex;
             while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
               const line = buffer.slice(0, newlineIndex).trim();
               buffer = buffer.slice(newlineIndex + 1);
-              
               if (!line || line.startsWith(":")) continue;
               if (!line.startsWith("data: ")) continue;
-              
               const jsonStr = line.slice(6).trim();
               if (jsonStr === "[DONE]") {
-                // Save assistant message
                 await supabase.from("dream_messages").insert({
                   dream_id: dreamId,
                   role: "assistant",
@@ -114,7 +144,6 @@ serve(async (req) => {
                 controller.close();
                 return;
               }
-              
               try {
                 const parsed = JSON.parse(jsonStr);
                 const content = parsed.choices?.[0]?.delta?.content;
@@ -137,9 +166,8 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("Dream chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: "An error occurred" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
