@@ -89,7 +89,7 @@ export default function Auth() {
             <Moon className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-semibold text-foreground">Oneiric</h1>
+            <h1 className="font-display text-2xl font-semibold text-foreground">Dreamiric</h1>
             <p className="text-sm text-muted-foreground font-body mt-0.5">Your private dream journal</p>
           </div>
         </div>

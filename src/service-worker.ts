@@ -15,7 +15,7 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "Oneiric", body: event.data.text() };
+    data = { title: "Dreamiric", body: event.data.text() };
   }
 
   const options = {
@@ -26,7 +26,7 @@ self.addEventListener("push", (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || "Oneiric 🌙", options)
+    self.registration.showNotification(data.title || "Dreamiric 🌙", options)
   );
 });
 

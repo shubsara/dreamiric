@@ -27,8 +27,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
       manifest: {
-        name: "Oneiric – Dream Journal",
-        short_name: "Oneiric",
+        name: "Dreamiric – Dream Journal",
+        short_name: "Dreamiric",
         description: "Analyse your dreams and discover your psychology through Jungian depth analysis.",
         theme_color: "#0d0f1a",
         background_color: "#0d0f1a",

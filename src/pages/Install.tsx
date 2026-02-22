@@ -57,7 +57,7 @@ const Install = () => {
             <Moon className="w-12 h-12 text-primary" />
           </div>
           <div>
-            <h1 className="font-display text-3xl font-semibold text-foreground">Oneiric</h1>
+            <h1 className="font-display text-3xl font-semibold text-foreground">Dreamiric</h1>
             <p className="text-sm text-muted-foreground font-body mt-1">Dream Journal & Soul Analysis</p>
           </div>
         </div>
@@ -83,7 +83,7 @@ const Install = () => {
           <div className="space-y-4">
             <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 text-center">
               <p className="text-primary font-body font-medium text-sm">✓ App installed successfully!</p>
-              <p className="text-muted-foreground text-xs mt-1">Open Oneiric from your home screen</p>
+              <p className="text-muted-foreground text-xs mt-1">Open Dreamiric from your home screen</p>
             </div>
             <Button
               onClick={() => navigate("/")}
