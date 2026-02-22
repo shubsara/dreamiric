@@ -58,7 +58,7 @@ async function createVapidJwt(
   const payload = {
     aud: audience,
     exp: now + 43200,
-    sub: "mailto:support@oneiric.app",
+    sub: "mailto:support@dreamiric.app",
   };
 
   const encodedHeader = base64UrlEncode(new TextEncoder().encode(JSON.stringify(header)));
