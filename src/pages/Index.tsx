@@ -219,7 +219,28 @@ const Index = () => {
           {/* Main content */}
           <main className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {activeView === "patterns" ? (
-              <DreamPatterns />
+              !isSubscribed ? (
+                <div className="flex flex-col items-center justify-center py-24 space-y-6 animate-dream-in">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TrendingUp className="w-9 h-9 text-primary" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <h3 className="font-display text-xl text-foreground">Upgrade to Pro</h3>
+                    <p className="text-muted-foreground font-body text-sm max-w-xs">
+                      Upgrade to Pro to get your Pattern of your Dreams.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowSubscription(true)}
+                    className="gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl px-8 py-5 font-body font-medium shadow-dream"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Upgrade to Pro
+                  </Button>
+                </div>
+              ) : (
+                <DreamPatterns />
+              )
             ) : selectedDreamId ? (
               <DreamView
                 dreamId={selectedDreamId}
@@ -290,7 +311,28 @@ const Index = () => {
                 />
               </div>
               {activeView === "patterns" ? (
-                <DreamPatterns />
+                !isSubscribed ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-5">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <TrendingUp className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="font-display text-lg text-foreground">Upgrade to Pro</h3>
+                      <p className="text-muted-foreground font-body text-sm max-w-xs">
+                        Upgrade to Pro to get your Pattern of your Dreams.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowSubscription(true)}
+                      className="gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl px-8 py-5 font-body font-medium shadow-dream"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                ) : (
+                  <DreamPatterns />
+                )
               ) : (
                 <MobileJournalView
                   greeting={greeting}
