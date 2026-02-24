@@ -33,7 +33,8 @@ const Index = () => {
   const [showNewDream, setShowNewDream] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [activeView, setActiveView] = useState<View>("journal");
-  const isSubscribed = false; // Will be wired to Stripe later
+  const isDemoAccount = user?.email === "shubsara@gmail.com";
+  const isSubscribed = isDemoAccount; // Demo account gets Pro features; will be wired to Stripe later
   const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
 
   useEffect(() => {
