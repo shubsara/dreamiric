@@ -97,7 +97,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-body mb-1">Annual</p>
-              <p className="font-display text-xl font-semibold text-foreground">$179</p>
+              <p className="font-display text-xl font-semibold text-foreground">$79</p>
               <p className="text-xs text-muted-foreground font-body">per year</p>
               {selectedPlan === "annual" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -110,7 +110,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           {/* Annual per-month breakdown */}
           {selectedPlan === "annual" && (
             <p className="text-center text-xs text-muted-foreground font-body -mt-2">
-              That's just <span className="text-primary font-medium">$14.92/month</span> — billed annually
+              That's just <span className="text-primary font-medium">$6.58/month</span> — billed annually
             </p>
           )}
 
@@ -132,7 +132,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
             className="w-full bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-6 font-body font-medium gap-2 shadow-dream transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             <Sparkles className="w-4 h-4" />
-            {selectedPlan === "annual" ? "Start Annual Plan – $179/yr" : "Start Monthly Plan – $8.99/mo"}
+            {selectedPlan === "annual" ? "Start Annual Plan – $79/yr" : "Start Monthly Plan – $8.99/mo"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground font-body">
