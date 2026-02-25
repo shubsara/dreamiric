@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.send-morning-reminder]
 verify_jwt = false
+
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false
