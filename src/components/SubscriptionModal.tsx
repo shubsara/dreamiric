@@ -58,10 +58,28 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
         theme: {
           color: "#7c3aed",
         },
-        handler: () => {
-          toast({ title: "Payment successful!", description: "Welcome to Dreamiric Pro ✨" });
-          onSubscribe?.(selectedPlan);
-          onClose();
+        handler: async (response: any) => {
+          try {
+            // Verify payment via webhook
+            const { error: webhookError } = await supabase.functions.invoke("razorpay-webhook", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: selectedPlan,
+                user_id: user.id,
+              },
+            });
+            if (webhookError) throw webhookError;
+            toast({ title: "Payment successful!", description: "Welcome to Dreamiric Pro ✨" });
+            onSubscribe?.(selectedPlan);
+            onClose();
+          } catch (err: any) {
+            console.error("Verification error:", err);
+            toast({ title: "Payment verification failed", description: err.message, variant: "destructive" });
+          } finally {
+            setLoading(false);
+          }
         },
         modal: {
           ondismiss: () => setLoading(false),
