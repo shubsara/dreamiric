@@ -60,12 +60,12 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "user",
             content: [
-              { type: "text", text: "Please transcribe this dream recording exactly as spoken. Return only the transcription text, nothing else. Keep it natural and preserve all details mentioned." },
+              { type: "text", text: "You are an expert transcriptionist. Transcribe this dream recording exactly as spoken, preserving every detail, emotion, and nuance. Return only the transcription text with proper punctuation and paragraph breaks where natural pauses occur. Preserve the original language." },
               { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Audio}` } },
             ],
           },
