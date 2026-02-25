@@ -117,8 +117,8 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: analysis.image_prompt + ", ultra high resolution, no text, no words" }],
+        model: "google/gemini-3-pro-image-preview",
+        messages: [{ role: "user", content: analysis.image_prompt + ", masterpiece quality, ultra high resolution, rich detail, cinematic lighting, no text, no words, no letters, no watermarks" }],
         modalities: ["image", "text"],
       }),
     });
