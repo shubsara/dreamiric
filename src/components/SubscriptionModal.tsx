@@ -1,7 +1,16 @@
-import { X, Sparkles, Check, Zap, Lock } from "lucide-react";
+import { X, Sparkles, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 interface SubscriptionModalProps {
   onClose: () => void;
@@ -20,9 +29,57 @@ const FEATURES = [
 
 export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: SubscriptionModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("annual");
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubscribe = () => {
-    onSubscribe?.(selectedPlan);
+  const handleSubscribe = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
+        body: { plan: selectedPlan },
+      });
+
+      if (error || !data?.order_id) {
+        throw new Error(error?.message || "Failed to create order");
+      }
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "Dreamiric",
+        description: selectedPlan === "annual" ? "Annual Plan – ₹7,900/yr" : "Monthly Plan – ₹899/mo",
+        order_id: data.order_id,
+        prefill: {
+          email: user.email,
+        },
+        theme: {
+          color: "#7c3aed",
+        },
+        handler: () => {
+          toast({ title: "Payment successful!", description: "Welcome to Dreamiric Pro ✨" });
+          onSubscribe?.(selectedPlan);
+          onClose();
+        },
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        console.error("Payment failed:", response.error);
+        toast({ title: "Payment failed", description: response.error.description, variant: "destructive" });
+        setLoading(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error("Razorpay error:", err);
+      toast({ title: "Something went wrong", description: err.message, variant: "destructive" });
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,7 +128,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
               )}
             >
               <p className="text-xs text-muted-foreground font-body mb-1">Monthly</p>
-              <p className="font-display text-xl font-semibold text-foreground">$8.99</p>
+              <p className="font-display text-xl font-semibold text-foreground">₹899</p>
               <p className="text-xs text-muted-foreground font-body">per month</p>
               {selectedPlan === "monthly" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -93,11 +150,11 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
               {/* Best value badge */}
               <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
                 <span className="bg-primary text-primary-foreground text-xs font-body font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                  Save 66%
+                  Save 27%
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-body mb-1">Annual</p>
-              <p className="font-display text-xl font-semibold text-foreground">$79</p>
+              <p className="font-display text-xl font-semibold text-foreground">₹7,900</p>
               <p className="text-xs text-muted-foreground font-body">per year</p>
               {selectedPlan === "annual" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -110,7 +167,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           {/* Annual per-month breakdown */}
           {selectedPlan === "annual" && (
             <p className="text-center text-xs text-muted-foreground font-body -mt-2">
-              That's just <span className="text-primary font-medium">$6.58/month</span> — billed annually
+              That's just <span className="text-primary font-medium">₹658/month</span> — billed annually
             </p>
           )}
 
@@ -129,14 +186,19 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           {/* CTA */}
           <Button
             onClick={handleSubscribe}
+            disabled={loading}
             className="w-full bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-6 font-body font-medium gap-2 shadow-dream transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             <Sparkles className="w-4 h-4" />
-            {selectedPlan === "annual" ? "Start Annual Plan – $79/yr" : "Start Monthly Plan – $8.99/mo"}
+            {loading
+              ? "Processing…"
+              : selectedPlan === "annual"
+                ? "Start Annual Plan – ₹7,900/yr"
+                : "Start Monthly Plan – ₹899/mo"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground font-body">
-            Cancel anytime · Secure payment via Stripe
+            Cancel anytime · Secure payment via Razorpay
           </p>
         </div>
       </div>
