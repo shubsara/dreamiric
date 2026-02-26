@@ -8,6 +8,9 @@ import { DreamPatterns } from "@/components/DreamPatterns";
 import { NotificationToggle } from "@/components/NotificationToggle";
 import { UsageTracker } from "@/components/UsageTracker";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
+import { ProBadge } from "@/components/ProBadge";
+import { ManageSubscription } from "@/components/ManageSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -33,8 +36,7 @@ const Index = () => {
   const [showNewDream, setShowNewDream] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [activeView, setActiveView] = useState<View>("journal");
-  const isDemoAccount = user?.email === "shubsara@gmail.com";
-  const isSubscribed = isDemoAccount; // Demo account gets Pro features; will be wired to Stripe later
+  const { isPro: isSubscribed } = useSubscription();
   const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
 
   useEffect(() => {
@@ -94,9 +96,12 @@ const Index = () => {
                 <Moon className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="font-display font-semibold text-foreground text-lg leading-tight">
-                  Dream Journal
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-display font-semibold text-foreground text-lg leading-tight">
+                    Dream Journal
+                  </h1>
+                  {isSubscribed && <ProBadge />}
+                </div>
                 <p className="text-xs text-muted-foreground font-body truncate">{user?.email}</p>
               </div>
               <button
@@ -160,12 +165,16 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Usage tracker */}
-            <UsageTracker
-              dreamCount={dreams.length}
-              isSubscribed={isSubscribed}
-              onUpgrade={() => setShowSubscription(true)}
-            />
+            {/* Usage tracker or subscription management */}
+            {isSubscribed ? (
+              <ManageSubscription />
+            ) : (
+              <UsageTracker
+                dreamCount={dreams.length}
+                isSubscribed={isSubscribed}
+                onUpgrade={() => setShowSubscription(true)}
+              />
+            )}
 
             {/* Tips */}
             <div className="bg-primary/5 border border-primary/15 rounded-2xl p-4 space-y-2">
@@ -290,7 +299,10 @@ const Index = () => {
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <Moon className="w-4 h-4 text-primary" />
               </div>
-              <h1 className="font-display font-semibold text-foreground flex-1">Dream Journal</h1>
+              <h1 className="font-display font-semibold text-foreground flex-1">
+                Dream Journal
+                {isSubscribed && <ProBadge className="ml-2 align-middle" />}
+              </h1>
               <button
                 onClick={signOut}
                 title="Sign out"
