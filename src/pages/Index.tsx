@@ -343,6 +343,10 @@ const Index = () => {
                   onNewDream={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
                 />
               </div>
+              {/* Mobile streak counter */}
+              <div className="mb-4">
+                <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
+              </div>
               {activeView === "patterns" ? (
                 !isSubscribed ? (
                   <div className="flex flex-col items-center justify-center py-20 space-y-5">
