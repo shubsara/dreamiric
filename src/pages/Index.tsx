@@ -10,6 +10,7 @@ import { UsageTracker } from "@/components/UsageTracker";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { ProBadge } from "@/components/ProBadge";
 import { ManageSubscription } from "@/components/ManageSubscription";
+import { RetentionBanner } from "@/components/RetentionBanner";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,6 +177,13 @@ const Index = () => {
               />
             )}
 
+            {/* Retention banner */}
+            <RetentionBanner
+              dreamCount={dreams.length}
+              lastDreamDate={dreams[0]?.created_at ?? null}
+              onNewDream={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
+            />
+
             {/* Tips */}
             <div className="bg-primary/5 border border-primary/15 rounded-2xl p-4 space-y-2">
               <div className="flex items-center gap-2">
@@ -321,6 +329,14 @@ const Index = () => {
                   isSubscribed={isSubscribed}
                   onUpgrade={() => setShowSubscription(true)}
                   compact
+                />
+              </div>
+              {/* Mobile retention banner */}
+              <div className="mb-4">
+                <RetentionBanner
+                  dreamCount={dreams.length}
+                  lastDreamDate={dreams[0]?.created_at ?? null}
+                  onNewDream={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
                 />
               </div>
               {activeView === "patterns" ? (
