@@ -11,6 +11,7 @@ import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { ProBadge } from "@/components/ProBadge";
 import { ManageSubscription } from "@/components/ManageSubscription";
 import { RetentionBanner } from "@/components/RetentionBanner";
+import { DreamStreak } from "@/components/DreamStreak";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,6 +166,9 @@ const Index = () => {
                 </div>
               </div>
             </div>
+
+            {/* Streak counter */}
+            <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
 
             {/* Usage tracker or subscription management */}
             {isSubscribed ? (
