@@ -69,7 +69,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const amount = plan === "monthly" ? 89900 : 790000;
+    const amount = plan === "monthly" ? 49900 : 399900;
     const now = new Date();
     const expiresAt = new Date(now);
     if (plan === "monthly") {
