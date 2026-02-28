@@ -30,6 +30,8 @@ interface Dream {
 
 type View = "journal" | "patterns";
 
+const PATTERN_PREVIEW_KEY = "dream_pattern_preview_seen";
+
 const Index = () => {
   const { user, signOut } = useAuth();
   const [dreams, setDreams] = useState<Dream[]>([]);
@@ -40,6 +42,25 @@ const Index = () => {
   const [activeView, setActiveView] = useState<View>("journal");
   const { isPro: isSubscribed } = useSubscription();
   const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
+
+  // Free users get a one-time pattern preview at 7+ dreams
+  const [hasSeenPreview, setHasSeenPreview] = useState(() =>
+    localStorage.getItem(PATTERN_PREVIEW_KEY) === "true"
+  );
+  const [previewActive, setPreviewActive] = useState(false);
+  const canPreviewPatterns = !isSubscribed && dreams.length >= 7 && !hasSeenPreview;
+
+  const handlePatternsClick = (id: View) => {
+    if (id === "patterns" && canPreviewPatterns) {
+      localStorage.setItem(PATTERN_PREVIEW_KEY, "true");
+      setHasSeenPreview(true);
+      setPreviewActive(true);
+    }
+    setActiveView(id);
+    setSelectedDreamId(null);
+  };
+
+  const showPatterns = isSubscribed || previewActive;
 
   useEffect(() => {
     fetchDreams();
@@ -129,10 +150,7 @@ const Index = () => {
               {navItems.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
-                  onClick={() => {
-                    setActiveView(id);
-                    setSelectedDreamId(null);
-                  }}
+                  onClick={() => handlePatternsClick(id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all",
                     activeView === id && !selectedDreamId
@@ -142,6 +160,9 @@ const Index = () => {
                 >
                   <Icon className="w-4 h-4" />
                   {label}
+                  {id === "patterns" && canPreviewPatterns && (
+                    <span className="ml-auto text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-medium">Preview</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -241,15 +262,42 @@ const Index = () => {
           {/* Main content */}
           <main className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {activeView === "patterns" ? (
-              !isSubscribed ? (
+              showPatterns ? (
+                <div className="space-y-4 animate-dream-in">
+                  {!isSubscribed && (
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-accent/10 border border-accent/20 px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm font-body text-accent">
+                        <Sparkles className="w-4 h-4 flex-shrink-0" />
+                        <span>One-time preview — upgrade to Pro for ongoing access</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowSubscription(true)}
+                        className="bg-dream-primary hover:opacity-90 text-primary-foreground rounded-lg font-body text-xs px-3"
+                      >
+                        Upgrade
+                      </Button>
+                    </div>
+                  )}
+                  <DreamPatterns />
+                </div>
+              ) : (
                 <div className="flex flex-col items-center justify-center py-24 space-y-6 animate-dream-in">
                   <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="w-9 h-9 text-primary" />
                   </div>
                   <div className="text-center space-y-2">
-                    <h3 className="font-display text-xl text-foreground">Upgrade to Pro</h3>
+                    <h3 className="font-display text-xl text-foreground">
+                      {!isSubscribed && dreams.length < 7
+                        ? `Record ${7 - dreams.length} more dream${7 - dreams.length !== 1 ? "s" : ""} to unlock a free preview`
+                        : "Upgrade to Pro"}
+                    </h3>
                     <p className="text-muted-foreground font-body text-sm max-w-xs">
-                      Upgrade to Pro to get your Pattern of your Dreams.
+                      {!isSubscribed && dreams.length < 7
+                        ? "At 7 dreams you'll get a one-time pattern analysis preview."
+                        : hasSeenPreview
+                          ? "You've used your free preview. Upgrade to Pro for full access."
+                          : "Upgrade to Pro to get your Pattern of your Dreams."}
                     </p>
                   </div>
                   <Button
@@ -260,8 +308,6 @@ const Index = () => {
                     Upgrade to Pro
                   </Button>
                 </div>
-              ) : (
-                <DreamPatterns />
               )
             ) : selectedDreamId ? (
               <DreamView
@@ -348,15 +394,42 @@ const Index = () => {
                 <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
               </div>
               {activeView === "patterns" ? (
-                !isSubscribed ? (
+                showPatterns ? (
+                  <div className="space-y-3 animate-dream-in">
+                    {!isSubscribed && (
+                      <div className="flex items-center justify-between gap-2 rounded-xl bg-accent/10 border border-accent/20 px-3 py-2.5">
+                        <div className="flex items-center gap-2 text-xs font-body text-accent">
+                          <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>One-time preview</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => setShowSubscription(true)}
+                          className="bg-dream-primary hover:opacity-90 text-primary-foreground rounded-lg font-body text-xs px-3 h-7"
+                        >
+                          Upgrade
+                        </Button>
+                      </div>
+                    )}
+                    <DreamPatterns />
+                  </div>
+                ) : (
                   <div className="flex flex-col items-center justify-center py-20 space-y-5">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                       <TrendingUp className="w-7 h-7 text-primary" />
                     </div>
                     <div className="text-center space-y-2">
-                      <h3 className="font-display text-lg text-foreground">Upgrade to Pro</h3>
+                      <h3 className="font-display text-lg text-foreground">
+                        {!isSubscribed && dreams.length < 7
+                          ? `Record ${7 - dreams.length} more dream${7 - dreams.length !== 1 ? "s" : ""} to unlock a free preview`
+                          : "Upgrade to Pro"}
+                      </h3>
                       <p className="text-muted-foreground font-body text-sm max-w-xs">
-                        Upgrade to Pro to get your Pattern of your Dreams.
+                        {!isSubscribed && dreams.length < 7
+                          ? "At 7 dreams you'll get a one-time pattern analysis preview."
+                          : hasSeenPreview
+                            ? "You've used your free preview. Upgrade to Pro for full access."
+                            : "Upgrade to Pro to get your Pattern of your Dreams."}
                       </p>
                     </div>
                     <Button
@@ -367,8 +440,6 @@ const Index = () => {
                       Upgrade to Pro
                     </Button>
                   </div>
-                ) : (
-                  <DreamPatterns />
                 )
               ) : (
                 <MobileJournalView
@@ -389,7 +460,7 @@ const Index = () => {
                 {navItems.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveView(id)}
+                    onClick={() => handlePatternsClick(id)}
                     className={cn(
                       "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-body font-medium transition-all",
                       activeView === id
@@ -398,7 +469,12 @@ const Index = () => {
                     )}
                   >
                     <Icon className="w-5 h-5" />
-                    {label}
+                    <span className="flex items-center gap-1">
+                      {label}
+                      {id === "patterns" && canPreviewPatterns && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                      )}
+                    </span>
                   </button>
                 ))}
 
