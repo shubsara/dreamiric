@@ -115,8 +115,14 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           <X className="w-4 h-4" />
         </button>
 
+        {/* Limited-time discount banner */}
+        <div className="mx-4 mt-4 mb-0 flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 text-xs font-body text-primary font-medium animate-dream-in">
+          <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>Limited offer — prices dropped from <span className="line-through opacity-70">₹899/mo</span> to <span className="font-semibold">₹499/mo</span></span>
+        </div>
+
         {/* Header gradient */}
-        <div className="relative px-6 pt-8 pb-6 bg-gradient-to-b from-primary/15 to-transparent">
+        <div className="relative px-6 pt-6 pb-6 bg-gradient-to-b from-primary/15 to-transparent">
           <div className="flex flex-col items-center text-center gap-3">
             <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center pulse-glow">
               <Lock className="w-6 h-6 text-primary" />
