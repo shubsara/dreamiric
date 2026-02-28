@@ -161,7 +161,7 @@ const Index = () => {
                   <Icon className="w-4 h-4" />
                   {label}
                   {id === "patterns" && canPreviewPatterns && (
-                    <span className="ml-auto text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-medium">Preview</span>
+                    <span className="ml-auto text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-medium animate-pulse">Preview</span>
                   )}
                 </button>
               ))}
@@ -472,7 +472,7 @@ const Index = () => {
                     <span className="flex items-center gap-1">
                       {label}
                       {id === "patterns" && canPreviewPatterns && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                       )}
                     </span>
                   </button>
