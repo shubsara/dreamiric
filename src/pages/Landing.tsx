@@ -1,7 +1,41 @@
+import { useEffect } from "react";
 import { Moon, Sparkles, Brain, TrendingUp, Mic, Shield, ArrowRight, Star, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+
+const JSON_LD_ORG = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Dreamiric",
+  url: "https://dreamiric.lovable.app",
+  logo: "https://dreamiric.lovable.app/pwa-icon-512.png",
+  description: "AI-powered dream journal with Jungian depth analysis.",
+  sameAs: [],
+};
+
+const JSON_LD_APP = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Dreamiric",
+  url: "https://dreamiric.lovable.app",
+  applicationCategory: "HealthApplication",
+  operatingSystem: "All",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "INR",
+  },
+  description:
+    "Record dreams via text or voice. Get Jungian depth analysis, uncover archetypes, and discover recurring patterns in your subconscious.",
+  featureList: [
+    "Voice-to-dream transcription",
+    "Jungian depth analysis",
+    "Recurring pattern discovery",
+    "Private & encrypted",
+  ],
+  screenshot: "https://dreamiric.lovable.app/og-image.png",
+};
 
 const FEATURES = [
   {
@@ -48,6 +82,26 @@ const TESTIMONIALS = [
 
 export default function Landing() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const orgScript = document.createElement("script");
+    orgScript.type = "application/ld+json";
+    orgScript.text = JSON.stringify(JSON_LD_ORG);
+    orgScript.id = "ld-org";
+
+    const appScript = document.createElement("script");
+    appScript.type = "application/ld+json";
+    appScript.text = JSON.stringify(JSON_LD_APP);
+    appScript.id = "ld-app";
+
+    document.head.appendChild(orgScript);
+    document.head.appendChild(appScript);
+
+    return () => {
+      document.getElementById("ld-org")?.remove();
+      document.getElementById("ld-app")?.remove();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
