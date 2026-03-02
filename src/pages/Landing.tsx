@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Moon, Sparkles, Brain, TrendingUp, Mic, Shield, ArrowRight, Star, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Moon, Sparkles, Brain, TrendingUp, Mic, Shield, ArrowRight, Star, ChevronRight, HelpCircle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,25 @@ const JSON_LD_APP = {
     "Private & encrypted",
   ],
   screenshot: "https://dreamiric.lovable.app/og-image.png",
+};
+
+const FAQS = [
+  { q: "Is Dreamiric free to use?", a: "Yes! You can record up to 10 dreams for free. Upgrade to Pro for unlimited entries, full pattern analysis, and AI dream chat." },
+  { q: "How does the AI analyse my dreams?", a: "Our AI uses principles from Jungian depth psychology to identify archetypes, emotional themes, and symbolic patterns unique to your dream content." },
+  { q: "Can I record dreams with my voice?", a: "Absolutely. Tap the microphone icon right after waking and speak your dream. Our transcription captures every detail before it fades." },
+  { q: "Are my dreams private?", a: "Yes. Your dreams are encrypted and stored securely. Only you can access them — we never read, share, or sell your data." },
+  { q: "What are dream patterns?", a: "Patterns are recurring symbols, emotions, or themes that appear across multiple dreams. Tracking them helps you understand deeper aspects of your subconscious." },
+  { q: "Do I need to remember the full dream?", a: "Not at all. Even fragments, emotions, or single images are valuable. The more you log, the more patterns emerge over time." },
+];
+
+const JSON_LD_FAQ = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
 };
 
 const FEATURES = [
@@ -83,23 +102,24 @@ const TESTIMONIALS = [
 export default function Landing() {
   const navigate = useNavigate();
 
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   useEffect(() => {
-    const orgScript = document.createElement("script");
-    orgScript.type = "application/ld+json";
-    orgScript.text = JSON.stringify(JSON_LD_ORG);
-    orgScript.id = "ld-org";
-
-    const appScript = document.createElement("script");
-    appScript.type = "application/ld+json";
-    appScript.text = JSON.stringify(JSON_LD_APP);
-    appScript.id = "ld-app";
-
-    document.head.appendChild(orgScript);
-    document.head.appendChild(appScript);
+    const scripts = [
+      { id: "ld-org", data: JSON_LD_ORG },
+      { id: "ld-app", data: JSON_LD_APP },
+      { id: "ld-faq", data: JSON_LD_FAQ },
+    ].map(({ id, data }) => {
+      const el = document.createElement("script");
+      el.type = "application/ld+json";
+      el.text = JSON.stringify(data);
+      el.id = id;
+      document.head.appendChild(el);
+      return id;
+    });
 
     return () => {
-      document.getElementById("ld-org")?.remove();
-      document.getElementById("ld-app")?.remove();
+      scripts.forEach((id) => document.getElementById(id)?.remove());
     };
   }, []);
 
@@ -276,6 +296,40 @@ export default function Landing() {
               <p className="text-sm text-muted-foreground font-body leading-relaxed italic">"{t.text}"</p>
               <p className="text-xs font-body font-semibold text-foreground">{t.name}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="relative z-10 max-w-3xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <HelpCircle className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs font-body font-medium text-primary">FAQ</span>
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {FAQS.map((faq, i) => (
+            <button
+              key={i}
+              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              className="w-full text-left rounded-2xl bg-card/60 border border-border/40 backdrop-blur-sm p-5 transition-all hover:border-primary/30 animate-dream-in"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="font-display text-sm md:text-base font-semibold text-foreground">{faq.q}</h3>
+                <ChevronDown className={cn("w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200", openFaq === i && "rotate-180")} />
+              </div>
+              {openFaq === i && (
+                <p className="mt-3 text-sm text-muted-foreground font-body leading-relaxed border-t border-border/30 pt-3">
+                  {faq.a}
+                </p>
+              )}
+            </button>
           ))}
         </div>
       </section>
