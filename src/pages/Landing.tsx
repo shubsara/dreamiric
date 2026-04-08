@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sparkles, Brain, TrendingUp, Mic, Shield, ArrowRight, Star, ChevronRight, HelpCircle, ChevronDown } from "lucide-react";
+import { Moon, Sparkles, Brain, TrendingUp, Mic, Shield, ArrowRight, Star, ChevronRight, HelpCircle, ChevronDown, Check, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
