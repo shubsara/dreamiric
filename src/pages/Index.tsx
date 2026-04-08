@@ -507,10 +507,14 @@ const Index = () => {
           dreamCount={dreams.length}
           onClose={() => setShowSubscription(false)}
           onSubscribe={(plan) => {
-            // Stripe payment will be wired here
             setShowSubscription(false);
           }}
         />
+      )}
+
+      {/* Onboarding Tour */}
+      {showOnboarding && (
+        <OnboardingTour onComplete={() => setShowOnboarding(false)} />
       )}
     </div>
   );
