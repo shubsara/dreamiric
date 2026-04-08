@@ -118,7 +118,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
         {/* Limited-time discount banner */}
         <div className="mx-4 mt-4 mb-0 flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 text-xs font-body text-primary font-medium animate-dream-in">
           <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Limited offer — prices dropped from <span className="line-through opacity-70">₹899/mo</span> to <span className="font-semibold">₹499/mo</span></span>
+          <span>Pro plans now start at just <span className="font-semibold">₹99/mo</span></span>
         </div>
 
         {/* Header gradient */}
