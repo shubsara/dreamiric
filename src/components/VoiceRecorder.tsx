@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, Trash2, CheckCircle } from "lucide-react";
+import { Mic, Square, Play, Pause, Trash2, CheckCircle, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveform, setWaveform] = useState<number[]>(Array(40).fill(3));
+  const [micDenied, setMicDenied] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -82,8 +83,11 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
 
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
       animateWaveform(analyser);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Microphone access denied:", err);
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setMicDenied(true);
+      }
     }
   };
 
@@ -126,6 +130,32 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  if (micDenied) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-6 px-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+          <MicOff className="w-7 h-7 text-destructive" />
+        </div>
+        <h3 className="font-display text-lg font-semibold text-foreground">Microphone Access Denied</h3>
+        <p className="text-sm text-muted-foreground font-body max-w-xs leading-relaxed">
+          To record your dream by voice, please enable microphone access in your browser settings:
+        </p>
+        <ol className="text-xs text-muted-foreground font-body text-left space-y-1.5 list-decimal list-inside">
+          <li>Click the lock/info icon in the address bar</li>
+          <li>Find <strong>Microphone</strong> and set it to <strong>Allow</strong></li>
+          <li>Reload the page and try again</li>
+        </ol>
+        <Button
+          variant="outline"
+          onClick={() => setMicDenied(false)}
+          className="mt-2 rounded-full font-body"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-6">
