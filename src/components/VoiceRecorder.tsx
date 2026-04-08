@@ -131,6 +131,32 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
+  if (micDenied) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-6 px-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+          <MicOff className="w-7 h-7 text-destructive" />
+        </div>
+        <h3 className="font-display text-lg font-semibold text-foreground">Microphone Access Denied</h3>
+        <p className="text-sm text-muted-foreground font-body max-w-xs leading-relaxed">
+          To record your dream by voice, please enable microphone access in your browser settings:
+        </p>
+        <ol className="text-xs text-muted-foreground font-body text-left space-y-1.5 list-decimal list-inside">
+          <li>Click the lock/info icon in the address bar</li>
+          <li>Find <strong>Microphone</strong> and set it to <strong>Allow</strong></li>
+          <li>Reload the page and try again</li>
+        </ol>
+        <Button
+          variant="outline"
+          onClick={() => setMicDenied(false)}
+          className="mt-2 rounded-full font-body"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-6">
       {/* Waveform visualizer */}
