@@ -487,6 +487,7 @@ const Index = () => {
 
                 {/* FAB in center */}
                 <button
+                  data-tour="new-dream-btn"
                   onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
                   className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-dream-primary shadow-dream flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
                 >
