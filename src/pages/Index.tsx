@@ -12,6 +12,7 @@ import { ProBadge } from "@/components/ProBadge";
 import { ManageSubscription } from "@/components/ManageSubscription";
 import { RetentionBanner } from "@/components/RetentionBanner";
 import { DreamStreak } from "@/components/DreamStreak";
+import { OnboardingTour, shouldShowOnboarding } from "@/components/OnboardingTour";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
