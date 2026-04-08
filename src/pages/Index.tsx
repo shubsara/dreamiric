@@ -151,8 +151,9 @@ const Index = () => {
             {/* Nav */}
             <div className="space-y-1">
               {navItems.map(({ id, label, icon: Icon }) => (
-                <button
+              <button
                   key={id}
+                  data-tour={id === "journal" ? "journal-tab" : id === "patterns" ? "patterns-tab" : undefined}
                   onClick={() => handlePatternsClick(id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all",
