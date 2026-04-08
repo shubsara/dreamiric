@@ -15,6 +15,7 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveform, setWaveform] = useState<number[]>(Array(40).fill(3));
+  const [micDenied, setMicDenied] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
