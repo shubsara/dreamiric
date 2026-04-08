@@ -191,7 +191,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           {/* Annual per-month breakdown */}
           {selectedPlan === "annual" && (
             <p className="text-center text-xs text-muted-foreground font-body -mt-2">
-              That's just <span className="text-primary font-medium">₹333/month</span> — billed annually
+              That's just <span className="text-primary font-medium">₹83/month</span> — billed annually
             </p>
           )}
 
