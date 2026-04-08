@@ -140,6 +140,7 @@ const Index = () => {
 
             {/* New Dream button */}
             <Button
+              data-tour="new-dream-btn"
               onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
               className="w-full gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-5 font-body font-medium shadow-dream transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
@@ -150,8 +151,9 @@ const Index = () => {
             {/* Nav */}
             <div className="space-y-1">
               {navItems.map(({ id, label, icon: Icon }) => (
-                <button
+              <button
                   key={id}
+                  data-tour={id === "journal" ? "journal-tab" : id === "patterns" ? "patterns-tab" : undefined}
                   onClick={() => handlePatternsClick(id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all",
@@ -191,7 +193,9 @@ const Index = () => {
             </div>
 
             {/* Streak counter */}
-            <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
+            <div data-tour="streak-counter">
+              <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
+            </div>
 
             {/* Usage tracker or subscription management */}
             {isSubscribed ? (
@@ -462,6 +466,7 @@ const Index = () => {
                 {navItems.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
+                    data-tour={id === "journal" ? "journal-tab" : id === "patterns" ? "patterns-tab" : undefined}
                     onClick={() => handlePatternsClick(id)}
                     className={cn(
                       "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-body font-medium transition-all",
@@ -482,6 +487,7 @@ const Index = () => {
 
                 {/* FAB in center */}
                 <button
+                  data-tour="new-dream-btn"
                   onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
                   className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-dream-primary shadow-dream flex items-center justify-center text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
                 >
