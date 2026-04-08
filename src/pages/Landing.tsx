@@ -334,6 +334,87 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── PRICING ── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 mb-4">
+            <Zap className="w-3.5 h-3.5 text-accent" />
+            <span className="text-xs font-body font-medium text-accent">Limited-Time Offer</span>
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-muted-foreground font-body max-w-md mx-auto">
+            Start free. Upgrade when you're ready to go deeper.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          {/* Free Plan */}
+          <div className="rounded-2xl bg-card/60 border border-border/40 backdrop-blur-sm p-8 space-y-6 animate-dream-in">
+            <div>
+              <h3 className="font-display text-xl font-semibold text-foreground">Free</h3>
+              <p className="text-sm text-muted-foreground font-body mt-1">Perfect for getting started</p>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display text-4xl font-bold text-foreground">₹0</span>
+              <span className="text-sm text-muted-foreground font-body">/forever</span>
+            </div>
+            <ul className="space-y-3">
+              {["Up to 10 dream entries", "Basic AI analysis", "Voice recording", "Pattern preview at 7 dreams"].map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm font-body text-muted-foreground">
+                  <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Button
+              onClick={() => navigate("/auth")}
+              variant="outline"
+              className="w-full rounded-xl py-5 font-body font-semibold border-border/60 hover:border-primary/40"
+            >
+              Get Started Free
+            </Button>
+          </div>
+
+          {/* Pro Plan */}
+          <div className="relative rounded-2xl bg-gradient-to-br from-primary/10 via-card to-accent/5 border-2 border-primary/30 backdrop-blur-sm p-8 space-y-6 animate-dream-in shadow-glow" style={{ animationDelay: "100ms" }}>
+            <div className="absolute -top-3 right-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-body font-semibold">
+              Most Popular
+            </div>
+            <div>
+              <h3 className="font-display text-xl font-semibold text-foreground">Pro</h3>
+              <p className="text-sm text-muted-foreground font-body mt-1">For serious dreamers</p>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-4xl font-bold text-foreground">₹499</span>
+                <span className="text-sm text-muted-foreground font-body">/month</span>
+                <span className="text-sm text-muted-foreground font-body line-through ml-1">₹899</span>
+              </div>
+              <p className="text-xs text-accent font-body mt-1.5 font-medium">
+                Or ₹3,999/year (₹333/mo) — save 33%
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {["Unlimited dream entries", "Full Jungian depth analysis", "Complete pattern analytics", "AI dream chat", "Priority support"].map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm font-body text-foreground">
+                  <Check className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Button
+              onClick={() => navigate("/auth")}
+              className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl py-5 font-body font-semibold shadow-dream transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Sparkles className="w-4 h-4" />
+              Upgrade to Pro
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section className="relative z-10 max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-card to-accent/5 border border-primary/15 p-10 md:p-16 space-y-6">
