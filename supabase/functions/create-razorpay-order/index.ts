@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     // Amounts in paise (INR smallest unit)
-    const amount = plan === "monthly" ? 49900 : 3999_00; // ₹499 or ₹3999
+    const amount = plan === "monthly" ? 9900 : 99900; // ₹99 or ₹999
 
     const orderRes = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",

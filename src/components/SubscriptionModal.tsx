@@ -50,7 +50,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
         amount: data.amount,
         currency: data.currency,
         name: "Dreamiric",
-        description: selectedPlan === "annual" ? "Annual Plan – ₹3,999/yr" : "Monthly Plan – ₹499/mo",
+        description: selectedPlan === "annual" ? "Annual Plan – ₹999/yr" : "Monthly Plan – ₹99/mo",
         order_id: data.order_id,
         prefill: {
           email: user.email,
@@ -118,7 +118,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
         {/* Limited-time discount banner */}
         <div className="mx-4 mt-4 mb-0 flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 text-xs font-body text-primary font-medium animate-dream-in">
           <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Limited offer — prices dropped from <span className="line-through opacity-70">₹899/mo</span> to <span className="font-semibold">₹499/mo</span></span>
+          <span>Pro plans now start at just <span className="font-semibold">₹99/mo</span></span>
         </div>
 
         {/* Header gradient */}
@@ -152,7 +152,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
               )}
             >
               <p className="text-xs text-muted-foreground font-body mb-1">Monthly</p>
-              <p className="font-display text-xl font-semibold text-foreground">₹499</p>
+              <p className="font-display text-xl font-semibold text-foreground">₹99</p>
               <p className="text-xs text-muted-foreground font-body">per month</p>
               {selectedPlan === "monthly" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -178,7 +178,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-body mb-1">Annual</p>
-              <p className="font-display text-xl font-semibold text-foreground">₹3,999</p>
+              <p className="font-display text-xl font-semibold text-foreground">₹999</p>
               <p className="text-xs text-muted-foreground font-body">per year</p>
               {selectedPlan === "annual" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -191,7 +191,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
           {/* Annual per-month breakdown */}
           {selectedPlan === "annual" && (
             <p className="text-center text-xs text-muted-foreground font-body -mt-2">
-              That's just <span className="text-primary font-medium">₹333/month</span> — billed annually
+              That's just <span className="text-primary font-medium">₹83/month</span> — billed annually
             </p>
           )}
 
@@ -217,8 +217,8 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
             {loading
               ? "Processing…"
               : selectedPlan === "annual"
-              ? "Start Annual Plan – ₹3,999/yr"
-                : "Start Monthly Plan – ₹499/mo"}
+              ? "Start Annual Plan – ₹999/yr"
+                : "Start Monthly Plan – ₹99/mo"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground font-body">

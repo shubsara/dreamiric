@@ -388,12 +388,11 @@ export default function Landing() {
             </div>
             <div>
               <div className="flex items-baseline gap-2">
-                <span className="font-display text-4xl font-bold text-foreground">₹499</span>
+                <span className="font-display text-4xl font-bold text-foreground">₹99</span>
                 <span className="text-sm text-muted-foreground font-body">/month</span>
-                <span className="text-sm text-muted-foreground font-body line-through ml-1">₹899</span>
               </div>
               <p className="text-xs text-accent font-body mt-1.5 font-medium">
-                Or ₹3,999/year (₹333/mo) — save 33%
+                Or ₹999/year (₹83/mo) — save 30%
               </p>
             </div>
             <ul className="space-y-3">
