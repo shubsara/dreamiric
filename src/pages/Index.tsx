@@ -193,7 +193,9 @@ const Index = () => {
             </div>
 
             {/* Streak counter */}
-            <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
+            <div data-tour="streak-counter">
+              <DreamStreak dreamDates={dreams.map(d => d.created_at)} />
+            </div>
 
             {/* Usage tracker or subscription management */}
             {isSubscribed ? (
