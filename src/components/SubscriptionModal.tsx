@@ -217,8 +217,8 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
             {loading
               ? "Processing…"
               : selectedPlan === "annual"
-              ? "Start Annual Plan – ₹3,999/yr"
-                : "Start Monthly Plan – ₹499/mo"}
+              ? "Start Annual Plan – ₹999/yr"
+                : "Start Monthly Plan – ₹99/mo"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground font-body">
