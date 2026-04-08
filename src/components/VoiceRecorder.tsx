@@ -246,6 +246,12 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
           Recording your dream... speak naturally
         </p>
       )}
+
+      {!isRecording && !hasRecording && (
+        <p className="text-xs text-muted-foreground/70 font-body text-center max-w-[260px] leading-relaxed">
+          💡 Tip: Use a quiet environment for best transcription quality
+        </p>
+      )}
     </div>
   );
 }
