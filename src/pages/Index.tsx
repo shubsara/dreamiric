@@ -140,6 +140,7 @@ const Index = () => {
 
             {/* New Dream button */}
             <Button
+              data-tour="new-dream-btn"
               onClick={() => isAtLimit ? setShowSubscription(true) : setShowNewDream(true)}
               className="w-full gap-2 bg-dream-primary hover:opacity-90 text-primary-foreground rounded-xl py-5 font-body font-medium shadow-dream transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
