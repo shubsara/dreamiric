@@ -43,6 +43,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState<View>("journal");
   const { isPro: isSubscribed } = useSubscription();
   const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
+  const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
 
   // Free users get a one-time pattern preview at 7+ dreams
   const [hasSeenPreview, setHasSeenPreview] = useState(() =>
