@@ -12,6 +12,7 @@ import { ProBadge } from "@/components/ProBadge";
 import { ManageSubscription } from "@/components/ManageSubscription";
 import { RetentionBanner } from "@/components/RetentionBanner";
 import { DreamStreak } from "@/components/DreamStreak";
+import { OnboardingTour, shouldShowOnboarding } from "@/components/OnboardingTour";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState<View>("journal");
   const { isPro: isSubscribed } = useSubscription();
   const isAtLimit = !isSubscribed && dreams.length >= FREE_LIMIT;
+  const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
 
   // Free users get a one-time pattern preview at 7+ dreams
   const [hasSeenPreview, setHasSeenPreview] = useState(() =>
@@ -505,10 +507,14 @@ const Index = () => {
           dreamCount={dreams.length}
           onClose={() => setShowSubscription(false)}
           onSubscribe={(plan) => {
-            // Stripe payment will be wired here
             setShowSubscription(false);
           }}
         />
+      )}
+
+      {/* Onboarding Tour */}
+      {showOnboarding && (
+        <OnboardingTour onComplete={() => setShowOnboarding(false)} />
       )}
     </div>
   );
