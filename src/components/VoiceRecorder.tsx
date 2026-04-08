@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, Trash2, CheckCircle } from "lucide-react";
+import { Mic, Square, Play, Pause, Trash2, CheckCircle, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
