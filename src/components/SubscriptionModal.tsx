@@ -152,7 +152,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
               )}
             >
               <p className="text-xs text-muted-foreground font-body mb-1">Monthly</p>
-              <p className="font-display text-xl font-semibold text-foreground">₹499</p>
+              <p className="font-display text-xl font-semibold text-foreground">₹99</p>
               <p className="text-xs text-muted-foreground font-body">per month</p>
               {selectedPlan === "monthly" && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
