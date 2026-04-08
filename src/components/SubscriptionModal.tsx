@@ -50,7 +50,7 @@ export function SubscriptionModal({ onClose, onSubscribe, dreamCount }: Subscrip
         amount: data.amount,
         currency: data.currency,
         name: "Dreamiric",
-        description: selectedPlan === "annual" ? "Annual Plan – ₹3,999/yr" : "Monthly Plan – ₹499/mo",
+        description: selectedPlan === "annual" ? "Annual Plan – ₹999/yr" : "Monthly Plan – ₹99/mo",
         order_id: data.order_id,
         prefill: {
           email: user.email,
