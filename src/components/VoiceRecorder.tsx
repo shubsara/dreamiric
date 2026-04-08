@@ -83,8 +83,11 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
 
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
       animateWaveform(analyser);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Microphone access denied:", err);
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setMicDenied(true);
+      }
     }
   };
 
