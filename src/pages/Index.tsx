@@ -466,6 +466,7 @@ const Index = () => {
                 {navItems.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
+                    data-tour={id === "journal" ? "journal-tab" : id === "patterns" ? "patterns-tab" : undefined}
                     onClick={() => handlePatternsClick(id)}
                     className={cn(
                       "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-body font-medium transition-all",
