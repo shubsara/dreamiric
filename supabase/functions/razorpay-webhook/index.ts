@@ -27,9 +27,32 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the user via JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
-    if (!RAZORPAY_KEY_SECRET) {
-      throw new Error("RAZORPAY_KEY_SECRET is not configured");
+    const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
+    if (!RAZORPAY_KEY_SECRET || !RAZORPAY_KEY_ID) {
+      throw new Error("Razorpay keys are not configured");
     }
 
     const body = await req.json();
@@ -37,11 +60,9 @@ serve(async (req) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      plan,
-      user_id,
     } = body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !plan || !user_id) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -64,12 +85,48 @@ serve(async (req) => {
       );
     }
 
+    // Fetch the order from Razorpay to get authoritative plan/user_id from notes
+    const orderRes = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
+      headers: {
+        Authorization: "Basic " + btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`),
+      },
+    });
+    const orderData = await orderRes.json();
+    if (!orderRes.ok) {
+      console.error("Razorpay order fetch failed:", orderData);
+      return new Response(
+        JSON.stringify({ error: "Unable to verify order" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const notesUserId = orderData?.notes?.user_id;
+    const notesPlan = orderData?.notes?.plan;
+
+    if (!notesUserId || !notesPlan || !["monthly", "annual"].includes(notesPlan)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid order metadata" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Ensure the order belongs to the authenticated user
+    if (notesUserId !== user.id) {
+      console.error(`User ${user.id} attempted to claim order for ${notesUserId}`);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const plan = notesPlan;
+    const user_id = notesUserId;
+
     // Use service role to insert subscription
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const amount = plan === "monthly" ? 49900 : 399900;
+    const amount = plan === "monthly" ? 9900 : 99900;
     const now = new Date();
     const expiresAt = new Date(now);
     if (plan === "monthly") {
@@ -94,7 +151,10 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Subscription insert error:", insertError);
-      throw new Error(`Failed to save subscription: ${insertError.message}`);
+      return new Response(
+        JSON.stringify({ error: "An error occurred. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log(`Subscription created for user ${user_id}, plan: ${plan}`);
@@ -106,7 +166,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Webhook error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: "An error occurred. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
