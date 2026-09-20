@@ -446,6 +446,9 @@ export default function Landing() {
           </div>
           <p className="text-xs text-muted-foreground font-body">
             © {new Date().getFullYear()} Dreamiric. Your dreams, your insights, your privacy.
+            <a href="/privacy" className="ml-2 underline underline-offset-2 hover:text-foreground">
+              Privacy Policy
+            </a>
           </p>
         </div>
       </footer>
