@@ -184,8 +184,8 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
       <>
         <p>
           Questions, requests, or concerns about this policy or your data? Reach us at{" "}
-          <a href="mailto:support@dreamiric.com" className="text-primary underline underline-offset-4">
-            support@dreamiric.com
+          <a href="mailto:boxeavy@gmail.com" className="text-primary underline underline-offset-4">
+            boxeavy@gmail.com
           </a>
           .
         </p>
