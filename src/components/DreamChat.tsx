@@ -39,13 +39,14 @@ export function DreamChat({ dreamId, dreamText, interpretation, initialMessages 
 
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Please sign in again to continue.");
 
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/dream-chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           dreamId,
